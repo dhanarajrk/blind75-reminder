@@ -21,6 +21,15 @@ function DashboardPage() {
 
     console.log(data);
 
+    const load = async () => {
+        const res = await fetchDashboard(token);
+        setData(res);
+      };
+      
+      useEffect(() => {
+        load();
+      }, [token]);
+
     return (
         <div className="space-y-6">
             <div
@@ -43,7 +52,7 @@ function DashboardPage() {
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="space-y-6">
                     <ConsistencyPanel />
-                    <ProblemsTable />
+                    <ProblemsTable data={data} reload={load}/>
                 </div>
 
                 <SidePanels />
