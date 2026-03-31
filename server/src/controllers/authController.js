@@ -30,7 +30,13 @@ export const register = async (req, res) => {
     const token = generateToken(user);
 
     res.json({
-      user: { id: user._id, name: user.name, email: user.email },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        reminderEnabled: user.reminderEnabled,
+        reminderHour: user.reminderHour,
+      },
       token,
     });
   } catch (err) {
@@ -55,9 +61,46 @@ export const login = async (req, res) => {
     const token = generateToken(user);
 
     res.json({
-      user: { id: user._id, name: user.name, email: user.email },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        reminderEnabled: user.reminderEnabled,
+        reminderHour: user.reminderHour,
+      },
       token,
     });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select(
+      "name email reminderEnabled"
+    );
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const updateReminderSettings = async (req, res) => {
+  try {
+    const { reminderEnabled } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { reminderEnabled },
+      {
+        returnDocument: "after",
+        runValidators: true,
+      }
+    ).select("name email reminderEnabled");
+
+    res.json(user);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema(
       default: "email",
     },
     avatar: String,
+
+    reminderEnabled: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
