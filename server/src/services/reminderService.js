@@ -4,12 +4,82 @@ import { sendEmail } from "./sendEmail.js";
 
 const getDateKey = (date = new Date()) => date.toISOString().split("T")[0];
 
+const buildReminderEmail = ({ userName, dueProblems, appUrl }) => {
+  const topProblems = dueProblems.slice(0, 8);
+
+  return `
+    <div style="margin:0;padding:24px;background:#f5f0e8;font-family:Arial,sans-serif;color:#1a1208;">
+      <div style="max-width:640px;margin:0 auto;background:#e8e2d4;border:2px solid #d4ccb8;box-shadow:3px 3px 0px #1a120818;">
+        <div style="background:#1a1208;color:#f5f0e8;padding:16px 20px;border-bottom:3px solid #c84b2f;">
+          <div style="font-size:28px;font-weight:700;line-height:1.1;">Blind 75 REMINDER</div>
+          <div style="margin-top:4px;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:0.85;">
+            spaced repetition tracker
+          </div>
+        </div>
+
+        <div style="padding:20px;">
+          <p style="margin:0 0 12px;font-size:14px;">Hi ${userName || "there"},</p>
+
+          <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+            You have <strong>${dueProblems.length}</strong> problem${
+    dueProblems.length !== 1 ? "s" : ""
+  } due for review today.
+          </p>
+
+          <div style="margin:16px 0;border:1px solid #d4ccb8;background:#ede8dc;">
+            ${topProblems
+              .map(
+                (item, index) => `
+                  <div style="padding:10px 12px;border-bottom:${
+                    index !== topProblems.length - 1 ? "1px solid #d4ccb8" : "none"
+                  };font-size:13px;line-height:1.5;">
+                    <strong>${item.problem?.title || "Problem"}</strong>
+                    <span style="color:#7a7060;">
+                      — ${
+                        item.useCustomInterval
+                          ? `${item.customInterval}d custom interval`
+                          : `${item.defaultInterval}d interval`
+                      }
+                    </span>
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+
+          ${
+            dueProblems.length > 8
+              ? `<p style="margin:0 0 14px;font-size:12px;color:#7a7060;">+ ${
+                  dueProblems.length - 8
+                } more due today</p>`
+              : ""
+          }
+
+          <div style="margin:20px 0;">
+            <a
+              href="${appUrl}"
+              style="display:inline-block;background:#1a1208;color:#f5f0e8;text-decoration:none;padding:10px 16px;font-size:13px;border:2px solid #1a1208;"
+            >
+              Open Dashboard
+            </a>
+          </div>
+
+          <p style="margin:16px 0 0;font-size:12px;color:#7a7060;line-height:1.6;">
+            Keep the streak going.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
 export const sendDueReminders = async () => {
   const users = await User.find({
     reminderEnabled: true,
   });
 
   const todayKey = getDateKey(new Date());
+  const appUrl = process.env.APP_URL || "http://localhost:5173";
 
   for (const user of users) {
     const userProblems = await UserProblem.find({
@@ -24,31 +94,11 @@ export const sendDueReminders = async () => {
 
     if (!dueProblems.length) continue;
 
-    const html = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111;">
-        <h2>Blind 75 REMINDER</h2>
-        <p>Hi ${user.name || "there"},</p>
-        <p>You have <strong>${dueProblems.length}</strong> problem${
-      dueProblems.length !== 1 ? "s" : ""
-    } to review today.</p>
-
-        <ul>
-          ${dueProblems
-            .slice(0, 12)
-            .map(
-              (item) =>
-                `<li>${item.problem?.title || "Problem"} ${
-                  item.useCustomInterval
-                    ? `(${item.customInterval}d custom)`
-                    : `(${item.defaultInterval}d)`
-                }</li>`
-            )
-            .join("")}
-        </ul>
-
-        <p>Keep your streak going.</p>
-      </div>
-    `;
+    const html = buildReminderEmail({
+      userName: user.name,
+      dueProblems,
+      appUrl,
+    });
 
     await sendEmail({
       to: user.email,
