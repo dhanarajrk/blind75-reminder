@@ -1,32 +1,32 @@
-const stats = [
-    { label: "Due Today", value: 0, accent: "top-accent-red" },
-    { label: "Total Reviewed", value: 0, accent: "top-accent-green" },
-    { label: "Day Streak 🔥", value: 0, accent: "top-accent-amber" },
-    { label: "Mastered", value: 0, accent: "top-accent-blue" },
-    { label: "Not Started", value: 75, accent: "top-accent-muted" },
+function StatsRow({ stats }) {
+  const items = [
+    { label: "Due Today", value: stats?.dueToday ?? 0, accent: "top-accent-red" },
+    { label: "Problems Seen", value: stats?.totalReviewed ?? 0, accent: "top-accent-green" },
+    { label: "Streak", value: stats?.currentStreak ?? 0, accent: "top-accent-amber" },
+    { label: "Mastered", value: stats?.mastered ?? 0, accent: "top-accent-blue" },
+    { label: "Questions Left", value: stats?.notStarted ?? 75, accent: "top-accent-muted" },
   ];
-  
-  function StatsRow() {
-    return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        {stats.map((item) => (
-          <div
-            key={item.label}
-            className={`paper-card stat-card ${item.accent} p-4`}
-          >
-            <div className="display-serif text-4xl font-black leading-none">
-              {item.value}
-            </div>
-            <div
-              className="mt-2 text-[11px] uppercase tracking-wider"
-              style={{ color: "var(--muted)" }}
-            >
-              {item.label}
-            </div>
+
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className={`paper-card stat-card px-4 py-3 ${item.accent}`}
+        >
+          <div className="display-serif text-3xl font-black leading-none">
+            {item.value}
           </div>
-        ))}
-      </div>
-    );
-  }
-  
-  export default StatsRow;
+          <div
+            className="mt-1 text-[10px] uppercase tracking-wider"
+            style={{ color: "var(--muted)" }}
+          >
+            {item.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default StatsRow;
