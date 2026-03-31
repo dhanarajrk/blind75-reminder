@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js";
 import problemRoutes from "./routes/problemRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import reminderRoutes from "./routes/reminderRoutes.js";
 
 const app = express();
 
@@ -29,5 +30,6 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/reminders", reminderRoutes);
 
 export default app;
