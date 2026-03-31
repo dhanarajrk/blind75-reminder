@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import passport from "passport";
+
 import authRoutes from "./routes/authRoutes.js";
 import problemRoutes from "./routes/problemRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
@@ -18,7 +20,8 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// health check
+app.use(passport.initialize());
+
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -26,7 +29,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// auth routes
+//routes
 app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/analytics", analyticsRoutes);

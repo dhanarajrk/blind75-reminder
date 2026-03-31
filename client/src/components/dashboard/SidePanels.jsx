@@ -1,4 +1,4 @@
-import ReminderSettings from "./ReminderSettings";
+
 
 function SidePanels({ stats, data = [] }) {
   const topics = {};
@@ -17,7 +17,6 @@ function SidePanels({ stats, data = [] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <ReminderSettings />
       <section className="paper-card p-4">
         <div className="mb-4 flex items-center gap-3">
           <h2 className="display-serif text-base font-bold">Overview</h2>

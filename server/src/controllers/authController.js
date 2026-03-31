@@ -34,6 +34,7 @@ export const register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
         reminderEnabled: user.reminderEnabled,
         reminderHour: user.reminderHour,
       },
@@ -65,6 +66,7 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
         reminderEnabled: user.reminderEnabled,
         reminderHour: user.reminderHour,
       },
@@ -78,7 +80,7 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select(
-      "name email reminderEnabled"
+      "name email avatar reminderEnabled"
     );
 
     res.json(user);
@@ -98,9 +100,30 @@ export const updateReminderSettings = async (req, res) => {
         returnDocument: "after",
         runValidators: true,
       }
-    ).select("name email reminderEnabled");
+    ).select("name email avatar reminderEnabled");
 
     res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+export const googleAuthSuccess = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const appUrl = process.env.APP_URL || "http://localhost:5173";
+
+    return res.redirect(
+      `${appUrl}/oauth-success?token=${token}`
+    );
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
