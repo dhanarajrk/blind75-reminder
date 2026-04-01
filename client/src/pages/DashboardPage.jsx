@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import StatsRow from "../components/dashboard/StatsRow";
 import ActivityHeatmap from "../components/dashboard/ActivityHeatmap";
 import ConsistencyPanel from "../components/dashboard/ConsistencyPanel";
@@ -7,6 +7,8 @@ import ProblemsTable from "../components/problems/ProblemsTable";
 import { useAuthStore } from "../store/authStore";
 import { fetchDashboard } from "../api/problemApi";
 import { fetchAnalytics } from "../api/analyticsApi";
+import ReviewQueueModal from "../components/dashboard/ReviewQueueModal";
+
 
 function DashboardPage() {
     const token = useAuthStore((s) => s.token);
@@ -17,6 +19,23 @@ function DashboardPage() {
         heatmap: [],
         consistency: [],
     });
+    const [queueOpen, setQueueOpen] = useState(false);
+
+    const dueCount = useMemo(() => {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        return data.filter((p) => {
+            if (!p.nextReviewAt) return false;
+            const target = new Date(p.nextReviewAt);
+            const targetDay = new Date(
+                target.getFullYear(),
+                target.getMonth(),
+                target.getDate()
+            );
+            return targetDay <= today;
+        }).length;
+    }, [data]);
 
     const load = useCallback(async () => {
         if (!token) return;
@@ -41,17 +60,31 @@ function DashboardPage() {
     return (
         <div className="space-y-5">
             <div
-                className="flex flex-wrap items-center gap-2 border-b px-1 pb-2 text-[11px]"
+                className="flex flex-wrap items-center justify-between gap-3 border-b px-1 pb-2 text-[11px]"
                 style={{ borderColor: "var(--border)", color: "var(--muted)" }}
             >
-                <span className="font-medium" style={{ color: "var(--ink)" }}>
-                    Today
-                </span>
-                <span>{analytics.stats?.dueToday ?? 0} due</span>
-                <span>•</span>
-                <span>{analytics.stats?.reviewsThisWeek ?? 0} this week</span>
-                <span>•</span>
-                <span>{analytics.stats?.currentStreak ?? 0} day streak</span>
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium" style={{ color: "var(--ink)" }}>
+                        Today
+                    </span>
+                    <span>{analytics.stats?.dueToday ?? 0} due</span>
+                    <span>•</span>
+                    <span>{analytics.stats?.reviewsThisWeek ?? 0} this week</span>
+                    <span>•</span>
+                    <span>{analytics.stats?.currentStreak ?? 0} day streak</span>
+                </div>
+
+                <button
+                    onClick={() => setQueueOpen(true)}
+                    className="border px-3 py-1.5 text-[11px]"
+                    style={{
+                        background: "var(--ink)",
+                        color: "var(--bg)",
+                        borderColor: "var(--ink)",
+                    }}
+                >
+                    Review Now {dueCount > 0 ? `(${dueCount})` : ""}
+                </button>
             </div>
 
             <StatsRow stats={analytics.stats} />
@@ -78,6 +111,13 @@ function DashboardPage() {
                     />
                 </div>
             </div>
+
+            <ReviewQueueModal
+                open={queueOpen}
+                onClose={() => setQueueOpen(false)}
+                data={data}
+                reload={load}
+            />
         </div>
     );
 }
