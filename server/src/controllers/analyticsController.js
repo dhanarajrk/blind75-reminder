@@ -1,6 +1,7 @@
 import Problem from "../models/Problem.js";
 import UserProblem from "../models/UserProblem.js";
 import ActivityLog from "../models/ActivityLog.js";
+import ProblemReviewLog from "../models/ProblemReviewLog.js";
 
 const getDateKey = (date = new Date()) => date.toISOString().split("T")[0];
 
@@ -30,8 +31,7 @@ const getLongestStreak = (dateMap) => {
       const currDate = new Date(date);
       const diff = Math.round((currDate - prevDate) / 86400000);
 
-      if (diff === 1) current += 1;
-      else current = 1;
+      current = diff === 1 ? current + 1 : 1;
     }
 
     longest = Math.max(longest, current);
@@ -58,15 +58,50 @@ const getCurrentStreak = (dateMap) => {
   return streak;
 };
 
+const buildCalendarDays = (year, month, reviewMap) => {
+  const firstDay = new Date(year, month, 1);
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  const leading = firstDay.getDay();
+
+  const cells = [];
+
+  for (let i = 0; i < leading; i++) cells.push(null);
+
+  for (let day = 1; day <= lastDate; day++) {
+    const date = new Date(year, month, day);
+    const key = getDateKey(date);
+    const entry = reviewMap[key] || { count: 0, problems: [] };
+
+    cells.push({
+      date: key,
+      day,
+      count: entry.count,
+      problems: entry.problems,
+    });
+  }
+
+  return cells;
+};
+
 export const getAnalytics = async (req, res) => {
   const userId = req.user.id;
   const today = new Date();
   const todayKey = getDateKey(today);
 
-  const [problemCount, userProblems, activityLogs] = await Promise.all([
+  const requestedYear = Number(req.query.year);
+  const requestedMonth = Number(req.query.month);
+
+  const calendarYear = Number.isInteger(requestedYear) ? requestedYear : today.getFullYear();
+  const calendarMonth =
+    Number.isInteger(requestedMonth) && requestedMonth >= 0 && requestedMonth <= 11
+      ? requestedMonth
+      : today.getMonth();
+
+  const [problemCount, userProblems, activityLogs, reviewLogs] = await Promise.all([
     Problem.countDocuments(),
     UserProblem.find({ user: userId }),
     ActivityLog.find({ user: userId }),
+    ProblemReviewLog.find({ user: userId }).populate("problem", "title"),
   ]);
 
   const dueToday = userProblems.filter((p) => {
@@ -74,28 +109,35 @@ export const getAnalytics = async (req, res) => {
     return getDateKey(new Date(p.nextReviewAt)) <= todayKey;
   }).length;
 
-  const reviewedCount = userProblems.filter(
+  const problemsSeen = userProblems.filter(
     (p) => p.solveCount > 0 || p.struggleCount > 0
   ).length;
 
   const masteredCount = userProblems.filter((p) => p.solveCount >= 3).length;
-  const notStarted = problemCount - reviewedCount;
+  const questionsLeft = problemCount - problemsSeen;
 
   const activityMap = {};
   activityLogs.forEach((log) => {
     activityMap[log.date] = log.count;
   });
 
-  const last365Days = buildPastDays(365).map((date) => ({
-    date,
-    count: activityMap[date] || 0,
-  }));
+  const reviewMap = {};
+  reviewLogs.forEach((log) => {
+    const key = getDateKey(new Date(log.createdAt));
+    if (!reviewMap[key]) {
+      reviewMap[key] = { count: 0, problems: [] };
+    }
+    reviewMap[key].count += 1;
+    if (log.problem?.title && !reviewMap[key].problems.includes(log.problem.title)) {
+      reviewMap[key].problems.push(log.problem.title);
+    }
+  });
 
   const last30Days = buildPastDays(30).map((date, index, arr) => {
     const count = activityMap[date] || 0;
-
     let sum = 0;
     let len = 0;
+
     for (let i = Math.max(0, index - 6); i <= index; i++) {
       sum += activityMap[arr[i]] || 0;
       len++;
@@ -109,7 +151,7 @@ export const getAnalytics = async (req, res) => {
   });
 
   const currentStreak = getCurrentStreak(activityMap);
-  const longestStreak = getLongestStreak(activityMap);
+  const bestStreak = getLongestStreak(activityMap);
 
   const reviewsThisWeek = buildPastDays(7).reduce(
     (acc, date) => acc + (activityMap[date] || 0),
@@ -121,18 +163,26 @@ export const getAnalytics = async (req, res) => {
     0
   );
 
+  const calendarDays = buildCalendarDays(calendarYear, calendarMonth, reviewMap);
+
   res.json({
     stats: {
       dueToday,
-      totalReviewed: reviewedCount,
-      currentStreak,
+      problemsSeen,
       mastered: masteredCount,
-      notStarted,
-      longestStreak,
+      questionsLeft,
+      currentStreak,
+      bestStreak,
       reviewsThisWeek,
       reviewsThisMonth,
     },
-    heatmap: last365Days,
     consistency: last30Days,
+    calendar: {
+      year: calendarYear,
+      month: calendarMonth,
+      days: calendarDays,
+      currentStreak,
+      bestStreak,
+    },
   });
 };

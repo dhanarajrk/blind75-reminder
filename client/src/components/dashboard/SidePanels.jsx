@@ -1,6 +1,4 @@
-
-
-function SidePanels({ stats, data = [] }) {
+function SidePanels({ data = [] }) {
   const topics = {};
   data.forEach((p) => {
     if (!topics[p.topic]) topics[p.topic] = { total: 0, done: 0 };
@@ -12,29 +10,10 @@ function SidePanels({ stats, data = [] }) {
 
   const upcoming = data
     .filter((p) => p.nextReviewAt)
-    .sort((a, b) => new Date(a.nextReviewAt) - new Date(b.nextReviewAt))
-    .slice(0, 5);
+    .sort((a, b) => new Date(a.nextReviewAt) - new Date(b.nextReviewAt));
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="paper-card p-4">
-        <div className="mb-4 flex items-center gap-3">
-          <h2 className="display-serif text-base font-bold">Overview</h2>
-          <div className="h-px flex-1" style={{ background: "var(--border)" }} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="surface-card p-3">
-            <div style={{ color: "var(--muted)" }}>Longest streak</div>
-            <div className="mt-1 text-lg font-bold">{stats?.longestStreak ?? 0}</div>
-          </div>
-          <div className="surface-card p-3">
-            <div style={{ color: "var(--muted)" }}>This month</div>
-            <div className="mt-1 text-lg font-bold">{stats?.reviewsThisMonth ?? 0}</div>
-          </div>
-        </div>
-      </section>
-
       <section className="paper-card p-4">
         <div className="mb-4 flex items-center gap-3">
           <h2 className="display-serif text-base font-bold">Topic progress</h2>
@@ -73,7 +52,7 @@ function SidePanels({ stats, data = [] }) {
           <div className="h-px flex-1" style={{ background: "var(--border)" }} />
         </div>
 
-        <div className="space-y-2">
+        <div className={`${upcoming.length > 10 ? "max-h-72 overflow-y-auto pr-1" : ""} space-y-2`}>
           {upcoming.length === 0 ? (
             <div className="text-xs" style={{ color: "var(--muted)" }}>
               No upcoming reviews yet.

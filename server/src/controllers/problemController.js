@@ -1,6 +1,7 @@
 import Problem from "../models/Problem.js";
 import UserProblem from "../models/UserProblem.js";
 import ActivityLog from "../models/ActivityLog.js";
+import ProblemReviewLog from "../models/ProblemReviewLog.js";
 
 const getDateKey = (date = new Date()) => {
   return date.toISOString().split("T")[0];
@@ -82,6 +83,12 @@ export const updateReview = async (req, res) => {
 
   await up.save();
 
+  await ProblemReviewLog.create({
+    user: userId,
+    problem: problemId,
+    result: type,
+  });
+
   const dateKey = getDateKey(now);
 
   await ActivityLog.findOneAndUpdate(
@@ -94,29 +101,29 @@ export const updateReview = async (req, res) => {
 };
 
 
-  export const updateInterval = async (req, res) => {
-    const userId = req.user.id;
-    const { problemId, customInterval } = req.body;
-  
-    let up = await UserProblem.findOne({
+export const updateInterval = async (req, res) => {
+  const userId = req.user.id;
+  const { problemId, customInterval } = req.body;
+
+  let up = await UserProblem.findOne({
+    user: userId,
+    problem: problemId,
+  });
+
+  if (!up) {
+    const problem = await Problem.findById(problemId);
+
+    up = await UserProblem.create({
       user: userId,
       problem: problemId,
+      defaultInterval: problem.defaultInterval,
     });
-  
-    if (!up) {
-      const problem = await Problem.findById(problemId);
-  
-      up = await UserProblem.create({
-        user: userId,
-        problem: problemId,
-        defaultInterval: problem.defaultInterval,
-      });
-    }
-  
-    up.customInterval = customInterval;
-    up.useCustomInterval = true;
-  
-    await up.save();
-  
-    res.json(up);
-  };
+  }
+
+  up.customInterval = customInterval;
+  up.useCustomInterval = true;
+
+  await up.save();
+
+  res.json(up);
+};

@@ -1,14 +1,13 @@
 function StatsRow({ stats }) {
   const items = [
     { label: "Due Today", value: stats?.dueToday ?? 0, accent: "top-accent-red" },
-    { label: "Problems Seen", value: stats?.totalReviewed ?? 0, accent: "top-accent-green" },
-    { label: "Streak", value: stats?.currentStreak ?? 0, accent: "top-accent-amber" },
+    { label: "Problems Seen", value: stats?.problemsSeen ?? 0, accent: "top-accent-green" },
     { label: "Mastered", value: stats?.mastered ?? 0, accent: "top-accent-blue" },
-    { label: "Questions Left", value: stats?.notStarted ?? 75, accent: "top-accent-muted" },
+    { label: "Questions Left", value: stats?.questionsLeft ?? 75, accent: "top-accent-muted" },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {items.map((item) => (
         <div
           key={item.label}
