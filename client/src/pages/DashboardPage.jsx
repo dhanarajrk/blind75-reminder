@@ -71,18 +71,14 @@ function DashboardPage() {
 
   const handlePrevMonth = () => {
     setCalendarView((prev) => {
-      if (prev.month === 0) {
-        return { year: prev.year - 1, month: 11 };
-      }
+      if (prev.month === 0) return { year: prev.year - 1, month: 11 };
       return { year: prev.year, month: prev.month - 1 };
     });
   };
 
   const handleNextMonth = () => {
     setCalendarView((prev) => {
-      if (prev.month === 11) {
-        return { year: prev.year + 1, month: 0 };
-      }
+      if (prev.month === 11) return { year: prev.year + 1, month: 0 };
       return { year: prev.year, month: prev.month + 1 };
     });
   };
@@ -115,10 +111,7 @@ function DashboardPage() {
           {dueCount > 0 && (
             <span
               className="absolute -bottom-2 left-1/2 flex h-4 min-w-4 -translate-x-1/2 items-center justify-center rounded-full px-1 text-[10px] font-bold"
-              style={{
-                background: "var(--red)",
-                color: "white",
-              }}
+              style={{ background: "var(--red)", color: "white" }}
             >
               {dueCount}
             </span>
@@ -126,10 +119,12 @@ function DashboardPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="space-y-5 min-w-0">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
+        <div className="min-w-0 xl:h-[1047px] flex flex-col gap-5">
           <StatsRow stats={analytics.stats} />
-          <ProblemsTable data={data} reload={load} />
+          <div className="min-h-0 flex-1">
+            <ProblemsTable data={data} reload={load} />
+          </div>
         </div>
 
         <div className="space-y-5 min-w-0">
@@ -138,7 +133,10 @@ function DashboardPage() {
             onPrevMonth={handlePrevMonth}
             onNextMonth={handleNextMonth}
           />
-          <ConsistencyPanel data={analytics.consistency} stats={analytics.stats} />
+          <ConsistencyPanel
+            data={analytics.consistency}
+            stats={analytics.stats}
+          />
           <SidePanels data={data} />
         </div>
       </div>

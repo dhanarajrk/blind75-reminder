@@ -126,3 +126,12 @@ input::placeholder {
 .top-accent-muted::after {
   background: var(--muted);
 }
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}

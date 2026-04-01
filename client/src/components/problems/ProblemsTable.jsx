@@ -95,8 +95,8 @@ function ProblemsTable({ data = [], reload }) {
         !p.nextReviewAt
           ? "not_started"
           : nextLabel === "TODAY" || nextLabel === "OVERDUE"
-          ? "due"
-          : "reviewed";
+            ? "due"
+            : "reviewed";
 
       if (!searchMatch) return false;
       if (topicFilter && p.topic !== topicFilter) return false;
@@ -109,9 +109,9 @@ function ProblemsTable({ data = [], reload }) {
   }, [data, search, topicFilter, difficultyFilter, statusFilter, riskFilter]);
 
   return (
-    <section className="paper-card overflow-hidden">
+    <section className="paper-card overflow-hidden flex h-full min-h-0 flex-col">
       <div
-        className="flex flex-col gap-2 border-b p-3 md:flex-row md:items-center md:justify-between"
+        className="flex items-center justify-between gap-2 border-b p-2 overflow-x-auto"
         style={{ borderColor: "var(--border)" }}
       >
         <input
@@ -119,7 +119,7 @@ function ProblemsTable({ data = [], reload }) {
           placeholder="Search problems..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full border px-2.5 py-1.5 text-[12px] md:max-w-xs"
+          className="border px-2.5 py-1 text-[11px] w-56 shrink-0"
           style={{
             background: "var(--surface)",
             borderColor: "var(--border)",
@@ -127,18 +127,18 @@ function ProblemsTable({ data = [], reload }) {
           }}
         />
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <select
             value={topicFilter}
             onChange={(e) => setTopicFilter(e.target.value)}
-            className="border px-2 py-1.5 text-[11px]"
+            className="border px-1.5 py-1 text-[11px]"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
               color: "var(--ink)",
             }}
           >
-            <option value="">All topics</option>
+            <option value="">Topic</option>
             {topics.map((topic) => (
               <option key={topic} value={topic}>
                 {topic}
@@ -149,14 +149,14 @@ function ProblemsTable({ data = [], reload }) {
           <select
             value={difficultyFilter}
             onChange={(e) => setDifficultyFilter(e.target.value)}
-            className="border px-2 py-1.5 text-[11px]"
+            className="border px-1.5 py-1 text-[11px]"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
               color: "var(--ink)",
             }}
           >
-            <option value="">All difficulty</option>
+            <option value="">Diff</option>
             <option value="easy">easy</option>
             <option value="medium">medium</option>
             <option value="hard">hard</option>
@@ -165,14 +165,14 @@ function ProblemsTable({ data = [], reload }) {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border px-2 py-1.5 text-[11px]"
+            className="border px-1.5 py-1 text-[11px]"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
               color: "var(--ink)",
             }}
           >
-            <option value="">All status</option>
+            <option value="">Status</option>
             <option value="due">Due</option>
             <option value="reviewed">Reviewed</option>
             <option value="not_started">Not started</option>
@@ -181,14 +181,14 @@ function ProblemsTable({ data = [], reload }) {
           <select
             value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value)}
-            className="border px-2 py-1.5 text-[11px]"
+            className="border px-1.5 py-1 text-[11px]"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
               color: "var(--ink)",
             }}
           >
-            <option value="">All risk</option>
+            <option value="">Risk</option>
             <option value="high">high</option>
             <option value="medium">medium</option>
             <option value="low">low</option>
@@ -196,10 +196,13 @@ function ProblemsTable({ data = [], reload }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="min-h-0 flex-1 overflow-auto">
         <table className="min-w-full border-collapse">
-          <thead>
-            <tr style={{ background: "var(--ink)", color: "var(--bg)" }}>
+          <thead
+            className="sticky top-0 z-10"
+            style={{ background: "var(--ink)", color: "var(--bg)" }}
+          >
+            <tr>
               <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">#</th>
               <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Problem</th>
               <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Topic</th>
@@ -243,14 +246,14 @@ function ProblemsTable({ data = [], reload }) {
                           p.difficulty === "easy"
                             ? "#d4edda"
                             : p.difficulty === "medium"
-                            ? "#fff3cd"
-                            : "#fde8e4",
+                              ? "#fff3cd"
+                              : "#fde8e4",
                         color:
                           p.difficulty === "easy"
                             ? "#1a6b3a"
                             : p.difficulty === "medium"
-                            ? "#7a5000"
-                            : "#8b1a0a",
+                              ? "#7a5000"
+                              : "#8b1a0a",
                       }}
                     >
                       {p.difficulty}
