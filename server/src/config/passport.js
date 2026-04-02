@@ -8,7 +8,7 @@ const configurePassport = () => {
             {
                 clientID: process.env.GOOGLE_CLIENT_ID,
                 clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                callbackURL: process.env.GOOGLE_CALLBACK_URL,
+                callbackURL: process.env.GOOGLE_CALLBACK_URL_PROD,
             },
             async (_accessToken, _refreshToken, profile, done) => {
                 try {
