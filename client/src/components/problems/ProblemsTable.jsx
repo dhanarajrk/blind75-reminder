@@ -109,7 +109,7 @@ function ProblemsTable({ data = [], reload }) {
   }, [data, search, topicFilter, difficultyFilter, statusFilter, riskFilter]);
 
   return (
-    <section className="paper-card overflow-hidden flex h-full min-h-0 flex-col">
+    <section className="paper-card flex min-h-0 flex-col overflow-visible lg:h-full lg:overflow-hidden">
       <div
         className="flex items-center justify-between gap-2 border-b p-2 overflow-x-auto"
         style={{ borderColor: "var(--border)" }}
@@ -119,7 +119,7 @@ function ProblemsTable({ data = [], reload }) {
           placeholder="Search problems..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border px-2.5 py-1 text-[11px] w-56 shrink-0"
+          className="border px-2.5 py-1 text-[11px] w-44 sm:w-56 shrink-0"
           style={{
             background: "var(--surface)",
             borderColor: "var(--border)",
@@ -196,7 +196,7 @@ function ProblemsTable({ data = [], reload }) {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto hidden md:block">
         <table className="min-w-full border-collapse">
           <thead
             className="sticky top-0 z-10"
@@ -216,10 +216,7 @@ function ProblemsTable({ data = [], reload }) {
 
           <tbody>
             {filteredData.map((p, index) => {
-              const currentInterval = p.useCustomInterval
-                ? p.customInterval
-                : p.defaultInterval;
-
+              const currentInterval = p.useCustomInterval ? p.customInterval : p.defaultInterval;
               const nextLabel = getNextReviewLabel(p.nextReviewAt);
 
               return (
@@ -231,13 +228,10 @@ function ProblemsTable({ data = [], reload }) {
                   <td className="px-4 py-2.5 text-xs" style={{ color: "var(--muted)" }}>
                     {String(index + 1).padStart(2, "0")}
                   </td>
-
                   <td className="px-4 py-2.5 text-sm font-medium">{p.title}</td>
-
                   <td className="px-4 py-2.5 text-xs" style={{ color: "var(--muted)" }}>
                     {p.topic}
                   </td>
-
                   <td className="px-4 py-2.5 text-xs">
                     <span
                       className="inline-block rounded px-1.5 py-0.5 text-[10px]"
@@ -259,14 +253,12 @@ function ProblemsTable({ data = [], reload }) {
                       {p.difficulty}
                     </span>
                   </td>
-
                   <td className="px-4 py-2.5 text-sm">
                     <div
                       ref={openDropdownId === p._id ? dropdownRef : null}
                       className="relative inline-flex items-center gap-1.5"
                     >
                       <span className="font-semibold text-[13px]">{currentInterval}d</span>
-
                       <button
                         type="button"
                         onClick={() =>
@@ -311,13 +303,10 @@ function ProblemsTable({ data = [], reload }) {
                       )}
                     </div>
                   </td>
-
                   <td className="px-4 py-2.5 text-xs">{nextLabel}</td>
-
                   <td className="px-4 py-2.5 text-[11px]">
                     {p.streak ? `🔥${p.streak}` : "—"}
                   </td>
-
                   <td className="px-4 py-2.5">
                     <div className="flex flex-col gap-1">
                       <button
@@ -370,6 +359,138 @@ function ProblemsTable({ data = [], reload }) {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-auto p-3 space-y-3 md:hidden">
+        {filteredData.map((p) => {
+          const currentInterval = p.useCustomInterval ? p.customInterval : p.defaultInterval;
+          const nextLabel = getNextReviewLabel(p.nextReviewAt);
+
+          return (
+            <div
+              key={p._id}
+              className="rounded border p-3"
+              style={{
+                borderColor: "var(--border)",
+                background: "var(--surface)",
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium">{p.title}</div>
+                  <div className="mt-1 text-[11px]" style={{ color: "var(--muted)" }}>
+                    {p.topic} · {nextLabel}
+                  </div>
+                </div>
+
+                <span
+                  className="inline-block rounded px-1.5 py-0.5 text-[10px]"
+                  style={{
+                    background:
+                      p.difficulty === "easy"
+                        ? "#d4edda"
+                        : p.difficulty === "medium"
+                          ? "#fff3cd"
+                          : "#fde8e4",
+                    color:
+                      p.difficulty === "easy"
+                        ? "#1a6b3a"
+                        : p.difficulty === "medium"
+                          ? "#7a5000"
+                          : "#8b1a0a",
+                  }}
+                >
+                  {p.difficulty}
+                </span>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{currentInterval}d</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenDropdownId(openDropdownId === p._id ? null : p._id)
+                    }
+                    className="inline-flex h-5 w-5 items-center justify-center rounded border"
+                    style={{
+                      background: "var(--card)",
+                      borderColor: "var(--border)",
+                      color: "var(--muted)",
+                    }}
+                  >
+                    <Settings size={11} />
+                  </button>
+                </div>
+
+                <div>{p.streak ? `🔥${p.streak}` : "—"}</div>
+              </div>
+
+              {openDropdownId === p._id && (
+                <div className="mt-2">
+                  <select
+                    autoFocus
+                    defaultValue={String(currentInterval)}
+                    onChange={(e) => handleIntervalChange(p._id, e.target.value)}
+                    className="w-full border px-2 py-1 text-[11px]"
+                    style={{
+                      background: "var(--card)",
+                      borderColor: "var(--border)",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
+                      <option key={day} value={day}>
+                        {day}d{day === p.defaultInterval ? " (default)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => handleReview(p._id, "solved")}
+                  disabled={busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`}
+                  className="flex-1 border px-2 py-2 text-[11px] disabled:opacity-50"
+                  style={{
+                    background: "#d4edda",
+                    borderColor: "#a0d4b0",
+                    color: "#1a6b3a",
+                  }}
+                >
+                  {busyId === `${p._id}-solved` ? "..." : "Solved"}
+                </button>
+
+                <button
+                  onClick={() => handleReview(p._id, "struggled")}
+                  disabled={busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`}
+                  className="flex-1 border px-2 py-2 text-[11px] disabled:opacity-50"
+                  style={{
+                    background: "#fde8e4",
+                    borderColor: "#f0b0a8",
+                    color: "#8b1a0a",
+                  }}
+                >
+                  {busyId === `${p._id}-struggled` ? "..." : "Struggled"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {filteredData.length === 0 && (
+          <div
+            className="rounded border px-4 py-8 text-center text-sm"
+            style={{
+              color: "var(--muted)",
+              borderColor: "var(--border)",
+              background: "var(--surface)",
+            }}
+          >
+            No problems match your filters.
+          </div>
+        )}
       </div>
     </section>
   );

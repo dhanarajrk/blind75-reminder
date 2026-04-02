@@ -1,4 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap');
 @import "tailwindcss";
+
+@keyframes cuteWobble {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+.cute-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.cute-footer-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.cute-footer-card:hover {
+  transform: translateY(-3px);
+}
+
+.cute-float-icon {
+  animation: cuteWobble 3s ease-in-out infinite;
+}
+
+.cute-social-icon:hover {
+  transform: scale(1.15) !important;
+  background: #a31250 !important;
+}
+
+.cute-btn-support:hover,
+.cute-btn-github:hover {
+  opacity: 0.88;
+  transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .cute-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .cute-footer-grid > div {
+    max-width: 300px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
 
 :root {
   --bg: #f5f0e8;

@@ -66,10 +66,10 @@ function AppHeader() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
         <div>
-          <div className="logo-font text-xl font-black tracking-tight sm:text-2xl">
+          <div className="logo-font text-lg font-black tracking-tight sm:text-2xl">
             Blind 75 REMINDER
           </div>
-          <div className="mt-0.5 text-[10px] uppercase tracking-[0.22em] opacity-80">
+          <div className="mt-0.5 hidden text-[10px] uppercase tracking-[0.22em] opacity-80 sm:block">
             spaced repetition tracker
           </div>
         </div>
