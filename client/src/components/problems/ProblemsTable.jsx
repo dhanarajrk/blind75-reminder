@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings, Check, AlertTriangle } from "lucide-react";
 import { reviewProblem, updateIntervalApi } from "../../api/problemApi";
 import { useAuthStore } from "../../store/authStore";
 
@@ -164,6 +164,17 @@ function ProblemsTable({ data = [], reload }) {
     });
   }, [data, search, topicFilter, difficultyFilter, statusFilter, riskFilter]);
 
+  const actionButtonBase = {
+    borderRadius: "999px",
+    fontSize: "10px",
+    fontWeight: 600,
+    padding: "5px 10px",
+    cursor: "pointer",
+    transition:
+      "transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease, background-color 160ms ease",
+    boxShadow: "0 1px 0 rgba(0,0,0,0.04)",
+  };
+
   return (
     <>
       <section className="paper-card flex min-h-0 flex-col overflow-visible lg:h-full lg:overflow-hidden">
@@ -275,6 +286,8 @@ function ProblemsTable({ data = [], reload }) {
               {filteredData.map((p, index) => {
                 const currentInterval = p.useCustomInterval ? p.customInterval : p.defaultInterval;
                 const nextLabel = getNextReviewLabel(p.nextReviewAt);
+                const solvedBusy = busyId === `${p._id}-solved`;
+                const struggledBusy = busyId === `${p._id}-struggled`;
 
                 return (
                   <tr
@@ -365,37 +378,75 @@ function ProblemsTable({ data = [], reload }) {
                       {p.streak ? `🔥${p.streak}` : "—"}
                     </td>
                     <td className="px-4 py-2.5">
-                      <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => handleReview(p._id, "solved")}
-                          disabled={
-                            busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`
-                          }
-                          className="border px-2 py-1 text-[10px] leading-none disabled:opacity-50"
+                          disabled={solvedBusy || struggledBusy}
+                          className="inline-flex items-center gap-1.5 border disabled:opacity-50"
                           style={{
-                            background: "#d4edda",
-                            borderColor: "#a0d4b0",
-                            color: "#1a6b3a",
-                            cursor: "pointer",
+                            ...actionButtonBase,
+                            background: solvedBusy ? "#dff3e5" : "#eef9f1",
+                            borderColor: "#c9e8d3",
+                            color: "#1d7a46",
+                            transform: solvedBusy ? "scale(0.98)" : "scale(1)",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!solvedBusy && !struggledBusy) {
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                              e.currentTarget.style.boxShadow = "0 6px 14px rgba(29,122,70,0.12)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = solvedBusy ? "scale(0.98)" : "scale(1)";
+                            e.currentTarget.style.boxShadow = "0 1px 0 rgba(0,0,0,0.04)";
                           }}
                         >
-                          {busyId === `${p._id}-solved` ? "..." : "Solved"}
+                          {solvedBusy ? (
+                            <span className="inline-flex items-center gap-1">
+                              <AlertTriangle size={11} className="animate-pulse" />
+                              ...
+                            </span>
+                          ) : (
+                            <>
+                              <Check size={11} />
+                              Solved
+                            </>
+                          )}
                         </button>
 
                         <button
                           onClick={() => handleReview(p._id, "struggled")}
-                          disabled={
-                            busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`
-                          }
-                          className="border px-2 py-1 text-[10px] leading-none disabled:opacity-50"
+                          disabled={solvedBusy || struggledBusy}
+                          className="inline-flex items-center gap-1.5 border disabled:opacity-50"
                           style={{
-                            background: "#fde8e4",
-                            borderColor: "#f0b0a8",
-                            color: "#8b1a0a",
-                            cursor: "pointer",
+                            ...actionButtonBase,
+                            background: struggledBusy ? "#feebe7" : "#fff3f0",
+                            borderColor: "#f4d1c8",
+                            color: "#a64b33",
+                            transform: struggledBusy ? "scale(0.98)" : "scale(1)",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!solvedBusy && !struggledBusy) {
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                              e.currentTarget.style.boxShadow = "0 6px 14px rgba(166,75,51,0.12)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = struggledBusy ? "scale(0.98)" : "scale(1)";
+                            e.currentTarget.style.boxShadow = "0 1px 0 rgba(0,0,0,0.04)";
                           }}
                         >
-                          {busyId === `${p._id}-struggled` ? "..." : "Struggled"}
+                          {struggledBusy ? (
+                            <span className="inline-flex items-center gap-1">
+                              <AlertTriangle size={11} className="animate-pulse" />
+                              ...
+                            </span>
+                          ) : (
+                            <>
+                              <AlertTriangle size={11} />
+                              Struggle
+                            </>
+                          )}
                         </button>
                       </div>
                     </td>
@@ -422,6 +473,8 @@ function ProblemsTable({ data = [], reload }) {
           {filteredData.map((p) => {
             const currentInterval = p.useCustomInterval ? p.customInterval : p.defaultInterval;
             const nextLabel = getNextReviewLabel(p.nextReviewAt);
+            const solvedBusy = busyId === `${p._id}-solved`;
+            const struggledBusy = busyId === `${p._id}-struggled`;
 
             return (
               <div
@@ -508,30 +561,54 @@ function ProblemsTable({ data = [], reload }) {
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => handleReview(p._id, "solved")}
-                    disabled={busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`}
-                    className="flex-1 border px-2 py-2 text-[11px] disabled:opacity-50"
+                    disabled={solvedBusy || struggledBusy}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 border disabled:opacity-50"
                     style={{
-                      background: "#d4edda",
-                      borderColor: "#a0d4b0",
-                      color: "#1a6b3a",
-                      cursor: "pointer",
+                      ...actionButtonBase,
+                      padding: "8px 10px",
+                      background: solvedBusy ? "#dff3e5" : "#eef9f1",
+                      borderColor: "#c9e8d3",
+                      color: "#1d7a46",
+                      transform: solvedBusy ? "scale(0.98)" : "scale(1)",
                     }}
                   >
-                    {busyId === `${p._id}-solved` ? "..." : "Solved"}
+                    {solvedBusy ? (
+                      <span className="inline-flex items-center gap-1">
+                        <AlertTriangle size={12} className="animate-pulse" />
+                        ...
+                      </span>
+                    ) : (
+                      <>
+                        <Check size={12} />
+                        Solved
+                      </>
+                    )}
                   </button>
 
                   <button
                     onClick={() => handleReview(p._id, "struggled")}
-                    disabled={busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`}
-                    className="flex-1 border px-2 py-2 text-[11px] disabled:opacity-50"
+                    disabled={solvedBusy || struggledBusy}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 border disabled:opacity-50"
                     style={{
-                      background: "#fde8e4",
-                      borderColor: "#f0b0a8",
-                      color: "#8b1a0a",
-                      cursor: "pointer",
+                      ...actionButtonBase,
+                      padding: "8px 10px",
+                      background: struggledBusy ? "#feebe7" : "#fff3f0",
+                      borderColor: "#f4d1c8",
+                      color: "#a64b33",
+                      transform: struggledBusy ? "scale(0.98)" : "scale(1)",
                     }}
                   >
-                    {busyId === `${p._id}-struggled` ? "..." : "Struggled"}
+                    {struggledBusy ? (
+                      <span className="inline-flex items-center gap-1">
+                        <AlertTriangle size={12} className="animate-pulse" />
+                        ...
+                      </span>
+                    ) : (
+                      <>
+                        <AlertTriangle size={12} />
+                        Struggle
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
