@@ -12,6 +12,7 @@ function ProblemsTable({ data = [], reload }) {
   const [difficultyFilter, setDifficultyFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [riskFilter, setRiskFilter] = useState("");
+  const [reviewNotice, setReviewNotice] = useState(null);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -27,11 +28,66 @@ function ProblemsTable({ data = [], reload }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!reviewNotice) return;
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setReviewNotice(null);
+      }
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [reviewNotice]);
+
+  const formatDate = (dateValue) => {
+    const date = new Date(dateValue);
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
+  const getDayDiff = (dateValue) => {
+    const now = new Date();
+    const next = new Date(dateValue);
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const target = new Date(
+      next.getFullYear(),
+      next.getMonth(),
+      next.getDate()
+    );
+
+    return Math.ceil((target - today) / 86400000);
+  };
+
   const handleReview = async (id, type) => {
     try {
       setBusyId(`${id}-${type}`);
-      await reviewProblem(token, { problemId: id, type });
+
+      const updated = await reviewProblem(token, { problemId: id, type });
       await reload();
+
+      const diffDays = Math.max(1, getDayDiff(updated.nextReviewAt));
+
+      setReviewNotice({
+        title:
+          type === "solved"
+            ? "Congratulations on solving this problem!"
+            : "Good effort on this problem!",
+        subtitle: `I will remind you again in next ${diffDays} day${
+          diffDays > 1 ? "s" : ""
+        } (${formatDate(updated.nextReviewAt)})`,
+        emoji: type === "solved" ? "🎉" : "💪",
+      });
     } catch (err) {
       console.error("Review update failed:", err);
     } finally {
@@ -109,390 +165,450 @@ function ProblemsTable({ data = [], reload }) {
   }, [data, search, topicFilter, difficultyFilter, statusFilter, riskFilter]);
 
   return (
-    <section className="paper-card flex min-h-0 flex-col overflow-visible lg:h-full lg:overflow-hidden">
-      <div
-        className="flex items-center justify-between gap-2 border-b p-2 overflow-x-auto"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <input
-          type="text"
-          placeholder="Search problems..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border px-2.5 py-1 text-[11px] w-44 sm:w-56 shrink-0"
-          style={{
-            background: "var(--surface)",
-            borderColor: "var(--border)",
-            color: "var(--ink)",
-          }}
-        />
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <select
-            value={topicFilter}
-            onChange={(e) => setTopicFilter(e.target.value)}
-            className="border px-1.5 py-1 text-[11px]"
+    <>
+      <section className="paper-card flex min-h-0 flex-col overflow-visible lg:h-full lg:overflow-hidden">
+        <div
+          className="flex items-center justify-between gap-2 border-b p-2 overflow-x-auto"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <input
+            type="text"
+            placeholder="Search problems..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border px-2.5 py-1 text-[11px] w-44 sm:w-56 shrink-0"
             style={{
               background: "var(--surface)",
               borderColor: "var(--border)",
               color: "var(--ink)",
             }}
-          >
-            <option value="">Topic</option>
-            {topics.map((topic) => (
-              <option key={topic} value={topic}>
-                {topic}
-              </option>
-            ))}
-          </select>
+          />
 
-          <select
-            value={difficultyFilter}
-            onChange={(e) => setDifficultyFilter(e.target.value)}
-            className="border px-1.5 py-1 text-[11px]"
-            style={{
-              background: "var(--surface)",
-              borderColor: "var(--border)",
-              color: "var(--ink)",
-            }}
-          >
-            <option value="">Diff</option>
-            <option value="easy">easy</option>
-            <option value="medium">medium</option>
-            <option value="hard">hard</option>
-          </select>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <select
+              value={topicFilter}
+              onChange={(e) => setTopicFilter(e.target.value)}
+              className="border px-1.5 py-1 text-[11px]"
+              style={{
+                background: "var(--surface)",
+                borderColor: "var(--border)",
+                color: "var(--ink)",
+              }}
+            >
+              <option value="">Topic</option>
+              {topics.map((topic) => (
+                <option key={topic} value={topic}>
+                  {topic}
+                </option>
+              ))}
+            </select>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border px-1.5 py-1 text-[11px]"
-            style={{
-              background: "var(--surface)",
-              borderColor: "var(--border)",
-              color: "var(--ink)",
-            }}
-          >
-            <option value="">Status</option>
-            <option value="due">Due</option>
-            <option value="reviewed">Reviewed</option>
-            <option value="not_started">Not started</option>
-          </select>
+            <select
+              value={difficultyFilter}
+              onChange={(e) => setDifficultyFilter(e.target.value)}
+              className="border px-1.5 py-1 text-[11px]"
+              style={{
+                background: "var(--surface)",
+                borderColor: "var(--border)",
+                color: "var(--ink)",
+              }}
+            >
+              <option value="">Diff</option>
+              <option value="easy">easy</option>
+              <option value="medium">medium</option>
+              <option value="hard">hard</option>
+            </select>
 
-          <select
-            value={riskFilter}
-            onChange={(e) => setRiskFilter(e.target.value)}
-            className="border px-1.5 py-1 text-[11px]"
-            style={{
-              background: "var(--surface)",
-              borderColor: "var(--border)",
-              color: "var(--ink)",
-            }}
-          >
-            <option value="">Risk</option>
-            <option value="high">high</option>
-            <option value="medium">medium</option>
-            <option value="low">low</option>
-          </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border px-1.5 py-1 text-[11px]"
+              style={{
+                background: "var(--surface)",
+                borderColor: "var(--border)",
+                color: "var(--ink)",
+              }}
+            >
+              <option value="">Status</option>
+              <option value="due">Due</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="not_started">Not started</option>
+            </select>
+
+            <select
+              value={riskFilter}
+              onChange={(e) => setRiskFilter(e.target.value)}
+              className="border px-1.5 py-1 text-[11px]"
+              style={{
+                background: "var(--surface)",
+                borderColor: "var(--border)",
+                color: "var(--ink)",
+              }}
+            >
+              <option value="">Risk</option>
+              <option value="high">high</option>
+              <option value="medium">medium</option>
+              <option value="low">low</option>
+            </select>
+          </div>
         </div>
-      </div>
 
-      <div className="min-h-0 flex-1 overflow-auto hidden md:block">
-        <table className="min-w-full border-collapse">
-          <thead
-            className="sticky top-0 z-10"
-            style={{ background: "var(--ink)", color: "var(--bg)" }}
-          >
-            <tr>
-              <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">#</th>
-              <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Problem</th>
-              <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Topic</th>
-              <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Diff</th>
-              <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Fixed interval</th>
-              <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Next review</th>
-              <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Streak</th>
-              <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Action</th>
-            </tr>
-          </thead>
+        <div className="min-h-0 flex-1 overflow-auto hidden md:block">
+          <table className="min-w-full border-collapse">
+            <thead
+              className="sticky top-0 z-10"
+              style={{ background: "var(--ink)", color: "var(--bg)" }}
+            >
+              <tr>
+                <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">#</th>
+                <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Problem</th>
+                <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Topic</th>
+                <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Diff</th>
+                <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Fixed interval</th>
+                <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Next review</th>
+                <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Streak</th>
+                <th className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {filteredData.map((p, index) => {
-              const currentInterval = p.useCustomInterval ? p.customInterval : p.defaultInterval;
-              const nextLabel = getNextReviewLabel(p.nextReviewAt);
+            <tbody>
+              {filteredData.map((p, index) => {
+                const currentInterval = p.useCustomInterval ? p.customInterval : p.defaultInterval;
+                const nextLabel = getNextReviewLabel(p.nextReviewAt);
 
-              return (
-                <tr
-                  key={p._id}
-                  className="border-b transition-colors hover:bg-[color:var(--surface)]"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  <td className="px-4 py-2.5 text-xs" style={{ color: "var(--muted)" }}>
-                    {String(index + 1).padStart(2, "0")}
-                  </td>
-                  <td className="px-4 py-2.5 text-sm font-medium">{p.title}</td>
-                  <td className="px-4 py-2.5 text-xs" style={{ color: "var(--muted)" }}>
-                    {p.topic}
-                  </td>
-                  <td className="px-4 py-2.5 text-xs">
-                    <span
-                      className="inline-block rounded px-1.5 py-0.5 text-[10px]"
-                      style={{
-                        background:
-                          p.difficulty === "easy"
-                            ? "#d4edda"
-                            : p.difficulty === "medium"
-                              ? "#fff3cd"
-                              : "#fde8e4",
-                        color:
-                          p.difficulty === "easy"
-                            ? "#1a6b3a"
-                            : p.difficulty === "medium"
-                              ? "#7a5000"
-                              : "#8b1a0a",
-                      }}
-                    >
-                      {p.difficulty}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-sm">
-                    <div
-                      ref={openDropdownId === p._id ? dropdownRef : null}
-                      className="relative inline-flex items-center gap-1.5"
-                    >
-                      <span className="font-semibold text-[13px]">{currentInterval}d</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenDropdownId(openDropdownId === p._id ? null : p._id)
-                        }
-                        className="inline-flex h-5 w-5 items-center justify-center rounded border"
+                return (
+                  <tr
+                    key={p._id}
+                    className="border-b transition-colors hover:bg-[color:var(--surface)]"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <td className="px-4 py-2.5 text-xs" style={{ color: "var(--muted)" }}>
+                      {String(index + 1).padStart(2, "0")}
+                    </td>
+                    <td className="px-4 py-2.5 text-sm font-medium">{p.title}</td>
+                    <td className="px-4 py-2.5 text-xs" style={{ color: "var(--muted)" }}>
+                      {p.topic}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs">
+                      <span
+                        className="inline-block rounded px-1.5 py-0.5 text-[10px]"
                         style={{
-                          background: "var(--surface)",
-                          borderColor: "var(--border)",
-                          color: "var(--muted)",
+                          background:
+                            p.difficulty === "easy"
+                              ? "#d4edda"
+                              : p.difficulty === "medium"
+                                ? "#fff3cd"
+                                : "#fde8e4",
+                          color:
+                            p.difficulty === "easy"
+                              ? "#1a6b3a"
+                              : p.difficulty === "medium"
+                                ? "#7a5000"
+                                : "#8b1a0a",
                         }}
                       >
-                        <Settings size={11} />
-                      </button>
-
-                      {openDropdownId === p._id && (
-                        <div
-                          className="absolute left-0 top-7 z-20 w-24 rounded border p-1 shadow-lg"
+                        {p.difficulty}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-sm">
+                      <div
+                        ref={openDropdownId === p._id ? dropdownRef : null}
+                        className="relative inline-flex items-center gap-1.5"
+                      >
+                        <span className="font-semibold text-[13px]">{currentInterval}d</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenDropdownId(openDropdownId === p._id ? null : p._id)
+                          }
+                          className="inline-flex h-5 w-5 items-center justify-center rounded border"
                           style={{
-                            background: "var(--card)",
+                            background: "var(--surface)",
                             borderColor: "var(--border)",
+                            color: "var(--muted)",
                           }}
                         >
-                          <select
-                            autoFocus
-                            defaultValue={String(currentInterval)}
-                            onChange={(e) => handleIntervalChange(p._id, e.target.value)}
-                            className="w-full border px-1.5 py-1 text-[11px]"
+                          <Settings size={11} />
+                        </button>
+
+                        {openDropdownId === p._id && (
+                          <div
+                            className="absolute left-0 top-7 z-20 w-24 rounded border p-1 shadow-lg"
                             style={{
-                              background: "var(--surface)",
+                              background: "var(--card)",
                               borderColor: "var(--border)",
-                              color: "var(--ink)",
                             }}
                           >
-                            {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
-                              <option key={day} value={day}>
-                                {day}d{day === p.defaultInterval ? " (default)" : ""}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2.5 text-xs">{nextLabel}</td>
-                  <td className="px-4 py-2.5 text-[11px]">
-                    {p.streak ? `🔥${p.streak}` : "—"}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex flex-col gap-1">
-                      <button
-                        onClick={() => handleReview(p._id, "solved")}
-                        disabled={
-                          busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`
-                        }
-                        className="border px-2 py-1 text-[10px] leading-none disabled:opacity-50"
-                        style={{
-                          background: "#d4edda",
-                          borderColor: "#a0d4b0",
-                          color: "#1a6b3a",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {busyId === `${p._id}-solved` ? "..." : "Solved"}
-                      </button>
+                            <select
+                              autoFocus
+                              defaultValue={String(currentInterval)}
+                              onChange={(e) => handleIntervalChange(p._id, e.target.value)}
+                              className="w-full border px-1.5 py-1 text-[11px]"
+                              style={{
+                                background: "var(--surface)",
+                                borderColor: "var(--border)",
+                                color: "var(--ink)",
+                              }}
+                            >
+                              {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
+                                <option key={day} value={day}>
+                                  {day}d{day === p.defaultInterval ? " (default)" : ""}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5 text-xs">{nextLabel}</td>
+                    <td className="px-4 py-2.5 text-[11px]">
+                      {p.streak ? `🔥${p.streak}` : "—"}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => handleReview(p._id, "solved")}
+                          disabled={
+                            busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`
+                          }
+                          className="border px-2 py-1 text-[10px] leading-none disabled:opacity-50"
+                          style={{
+                            background: "#d4edda",
+                            borderColor: "#a0d4b0",
+                            color: "#1a6b3a",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {busyId === `${p._id}-solved` ? "..." : "Solved"}
+                        </button>
 
-                      <button
-                        onClick={() => handleReview(p._id, "struggled")}
-                        disabled={
-                          busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`
-                        }
-                        className="border px-2 py-1 text-[10px] leading-none disabled:opacity-50"
-                        style={{
-                          background: "#fde8e4",
-                          borderColor: "#f0b0a8",
-                          color: "#8b1a0a",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {busyId === `${p._id}-struggled` ? "..." : "Struggled"}
-                      </button>
-                    </div>
+                        <button
+                          onClick={() => handleReview(p._id, "struggled")}
+                          disabled={
+                            busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`
+                          }
+                          className="border px-2 py-1 text-[10px] leading-none disabled:opacity-50"
+                          style={{
+                            background: "#fde8e4",
+                            borderColor: "#f0b0a8",
+                            color: "#8b1a0a",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {busyId === `${p._id}-struggled` ? "..." : "Struggled"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {filteredData.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="px-4 py-8 text-center text-sm"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    No problems match your filters.
                   </td>
                 </tr>
-              );
-            })}
+              )}
+            </tbody>
+          </table>
+        </div>
 
-            {filteredData.length === 0 && (
-              <tr>
-                <td
-                  colSpan={8}
-                  className="px-4 py-8 text-center text-sm"
-                  style={{ color: "var(--muted)" }}
-                >
-                  No problems match your filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+        <div className="min-h-0 flex-1 overflow-auto p-3 space-y-3 md:hidden">
+          {filteredData.map((p) => {
+            const currentInterval = p.useCustomInterval ? p.customInterval : p.defaultInterval;
+            const nextLabel = getNextReviewLabel(p.nextReviewAt);
 
-      <div className="min-h-0 flex-1 overflow-auto p-3 space-y-3 md:hidden">
-        {filteredData.map((p) => {
-          const currentInterval = p.useCustomInterval ? p.customInterval : p.defaultInterval;
-          const nextLabel = getNextReviewLabel(p.nextReviewAt);
+            return (
+              <div
+                key={p._id}
+                className="rounded border p-3"
+                style={{
+                  borderColor: "var(--border)",
+                  background: "var(--surface)",
+                }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-medium">{p.title}</div>
+                    <div className="mt-1 text-[11px]" style={{ color: "var(--muted)" }}>
+                      {p.topic} · {nextLabel}
+                    </div>
+                  </div>
 
-          return (
+                  <span
+                    className="inline-block rounded px-1.5 py-0.5 text-[10px]"
+                    style={{
+                      background:
+                        p.difficulty === "easy"
+                          ? "#d4edda"
+                          : p.difficulty === "medium"
+                            ? "#fff3cd"
+                            : "#fde8e4",
+                      color:
+                        p.difficulty === "easy"
+                          ? "#1a6b3a"
+                          : p.difficulty === "medium"
+                            ? "#7a5000"
+                            : "#8b1a0a",
+                    }}
+                  >
+                    {p.difficulty}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{currentInterval}d</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenDropdownId(openDropdownId === p._id ? null : p._id)
+                      }
+                      className="inline-flex h-5 w-5 items-center justify-center rounded border"
+                      style={{
+                        background: "var(--card)",
+                        borderColor: "var(--border)",
+                        color: "var(--muted)",
+                      }}
+                    >
+                      <Settings size={11} />
+                    </button>
+                  </div>
+
+                  <div>{p.streak ? `🔥${p.streak}` : "—"}</div>
+                </div>
+
+                {openDropdownId === p._id && (
+                  <div className="mt-2">
+                    <select
+                      autoFocus
+                      defaultValue={String(currentInterval)}
+                      onChange={(e) => handleIntervalChange(p._id, e.target.value)}
+                      className="w-full border px-2 py-1 text-[11px]"
+                      style={{
+                        background: "var(--card)",
+                        borderColor: "var(--border)",
+                        color: "var(--ink)",
+                      }}
+                    >
+                      {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
+                        <option key={day} value={day}>
+                          {day}d{day === p.defaultInterval ? " (default)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => handleReview(p._id, "solved")}
+                    disabled={busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`}
+                    className="flex-1 border px-2 py-2 text-[11px] disabled:opacity-50"
+                    style={{
+                      background: "#d4edda",
+                      borderColor: "#a0d4b0",
+                      color: "#1a6b3a",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {busyId === `${p._id}-solved` ? "..." : "Solved"}
+                  </button>
+
+                  <button
+                    onClick={() => handleReview(p._id, "struggled")}
+                    disabled={busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`}
+                    className="flex-1 border px-2 py-2 text-[11px] disabled:opacity-50"
+                    style={{
+                      background: "#fde8e4",
+                      borderColor: "#f0b0a8",
+                      color: "#8b1a0a",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {busyId === `${p._id}-struggled` ? "..." : "Struggled"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {filteredData.length === 0 && (
             <div
-              key={p._id}
-              className="rounded border p-3"
+              className="rounded border px-4 py-8 text-center text-sm"
               style={{
+                color: "var(--muted)",
                 borderColor: "var(--border)",
                 background: "var(--surface)",
               }}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-medium">{p.title}</div>
-                  <div className="mt-1 text-[11px]" style={{ color: "var(--muted)" }}>
-                    {p.topic} · {nextLabel}
-                  </div>
-                </div>
-
-                <span
-                  className="inline-block rounded px-1.5 py-0.5 text-[10px]"
-                  style={{
-                    background:
-                      p.difficulty === "easy"
-                        ? "#d4edda"
-                        : p.difficulty === "medium"
-                          ? "#fff3cd"
-                          : "#fde8e4",
-                    color:
-                      p.difficulty === "easy"
-                        ? "#1a6b3a"
-                        : p.difficulty === "medium"
-                          ? "#7a5000"
-                          : "#8b1a0a",
-                  }}
-                >
-                  {p.difficulty}
-                </span>
-              </div>
-
-              <div className="mt-3 flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">{currentInterval}d</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpenDropdownId(openDropdownId === p._id ? null : p._id)
-                    }
-                    className="inline-flex h-5 w-5 items-center justify-center rounded border"
-                    style={{
-                      background: "var(--card)",
-                      borderColor: "var(--border)",
-                      color: "var(--muted)",
-                    }}
-                  >
-                    <Settings size={11} />
-                  </button>
-                </div>
-
-                <div>{p.streak ? `🔥${p.streak}` : "—"}</div>
-              </div>
-
-              {openDropdownId === p._id && (
-                <div className="mt-2">
-                  <select
-                    autoFocus
-                    defaultValue={String(currentInterval)}
-                    onChange={(e) => handleIntervalChange(p._id, e.target.value)}
-                    className="w-full border px-2 py-1 text-[11px]"
-                    style={{
-                      background: "var(--card)",
-                      borderColor: "var(--border)",
-                      color: "var(--ink)",
-                    }}
-                  >
-                    {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
-                      <option key={day} value={day}>
-                        {day}d{day === p.defaultInterval ? " (default)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => handleReview(p._id, "solved")}
-                  disabled={busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`}
-                  className="flex-1 border px-2 py-2 text-[11px] disabled:opacity-50"
-                  style={{
-                    background: "#d4edda",
-                    borderColor: "#a0d4b0",
-                    color: "#1a6b3a",
-                  }}
-                >
-                  {busyId === `${p._id}-solved` ? "..." : "Solved"}
-                </button>
-
-                <button
-                  onClick={() => handleReview(p._id, "struggled")}
-                  disabled={busyId === `${p._id}-solved` || busyId === `${p._id}-struggled`}
-                  className="flex-1 border px-2 py-2 text-[11px] disabled:opacity-50"
-                  style={{
-                    background: "#fde8e4",
-                    borderColor: "#f0b0a8",
-                    color: "#8b1a0a",
-                  }}
-                >
-                  {busyId === `${p._id}-struggled` ? "..." : "Struggled"}
-                </button>
-              </div>
+              No problems match your filters.
             </div>
-          );
-        })}
+          )}
+        </div>
+      </section>
 
-        {filteredData.length === 0 && (
+      {reviewNotice && (
+        <div
+          onClick={() => setReviewNotice(null)}
+          className="fixed inset-0 z-[120] flex items-center justify-center px-4"
+          style={{ background: "rgba(0, 0, 0, 0.45)" }}
+        >
           <div
-            className="rounded border px-4 py-8 text-center text-sm"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-[26px] border p-5 text-center shadow-xl"
             style={{
-              color: "var(--muted)",
-              borderColor: "var(--border)",
-              background: "var(--surface)",
+              background:
+                "linear-gradient(180deg, #fffdf8 0%, #fff8f5 45%, #f8fff9 100%)",
+              borderColor: "#ecd8c9",
+              boxShadow: "0 18px 45px rgba(0,0,0,0.18)",
             }}
           >
-            No problems match your filters.
+            <div className="mb-2 text-3xl">{reviewNotice.emoji}</div>
+
+            <div
+              style={{
+                color: "#7a4b2f",
+                fontSize: "18px",
+                fontWeight: 800,
+                lineHeight: 1.35,
+              }}
+            >
+              {reviewNotice.title}
+            </div>
+
+            <div
+              className="mt-2"
+              style={{
+                color: "#8b6b58",
+                fontSize: "13px",
+                lineHeight: 1.7,
+              }}
+            >
+              {reviewNotice.subtitle}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setReviewNotice(null)}
+              className="mt-5 cursor-pointer rounded-full border px-4 py-2 text-[12px] font-semibold"
+              style={{
+                background: "var(--ink)",
+                color: "var(--bg)",
+                borderColor: "var(--ink)",
+              }}
+            >
+              Okay ✨
+            </button>
           </div>
-        )}
-      </div>
-    </section>
+        </div>
+      )}
+    </>
   );
 }
 

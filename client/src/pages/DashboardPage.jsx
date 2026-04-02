@@ -8,6 +8,7 @@ import StreakCalendarPanel from "../components/dashboard/StreakCalendarPanel";
 import { useAuthStore } from "../store/authStore";
 import { fetchDashboard } from "../api/problemApi";
 import { fetchAnalytics } from "../api/analyticsApi";
+import supportQr from "../assets/support-upi-qr.jpeg";
 
 function DashboardPage() {
   const token = useAuthStore((s) => s.token);
@@ -25,6 +26,7 @@ function DashboardPage() {
     calendar: null,
   });
   const [queueOpen, setQueueOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -48,6 +50,25 @@ function DashboardPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!supportOpen) return;
+
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setSupportOpen(false);
+      }
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [supportOpen]);
 
   const dueCount = useMemo(() => {
     const current = new Date();
@@ -170,6 +191,120 @@ function DashboardPage() {
         reload={load}
       />
 
+      {supportOpen && (
+        <div
+          onClick={() => setSupportOpen(false)}
+          className="fixed inset-0 z-[120] flex items-center justify-center px-4 py-6"
+          style={{ background: "rgba(0, 0, 0, 0.58)" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md"
+            style={{
+              borderRadius: "28px",
+              background:
+                "linear-gradient(180deg, #fffdf7 0%, #fff5f8 55%, #f7fff8 100%)",
+              border: "2px solid rgba(255,255,255,0.85)",
+              boxShadow: "0 22px 60px rgba(0,0,0,0.28)",
+              padding: "1.4rem 1.25rem 1.2rem",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setSupportOpen(false)}
+              aria-label="Close support modal"
+              className="absolute right-3 top-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border text-sm"
+              style={{
+                background: "#fff",
+                color: "#7b4b27",
+                borderColor: "#f0d1b2",
+              }}
+            >
+              ✕
+            </button>
+
+            <div className="flex flex-col items-center text-center">
+              <div
+                style={{
+                  fontSize: "28px",
+                  lineHeight: 1,
+                  marginBottom: "0.35rem",
+                }}
+              >
+                ✨☕💖
+              </div>
+
+              <div
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "#b36a1f",
+                  marginBottom: "0.4rem",
+                }}
+              >
+                Support this project
+              </div>
+
+              <div
+                style={{
+                  fontFamily:
+                    "'Comic Neue', 'Segoe Print', 'Bradley Hand', 'Marker Felt', cursive",
+                  fontSize: "30px",
+                  fontWeight: 700,
+                  color: "#a14667",
+                  lineHeight: 1.1,
+                  marginBottom: "0.35rem",
+                  transform: "rotate(-2deg)",
+                }}
+              >
+                Appreciation
+              </div>
+
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: "#8a6a52",
+                  marginBottom: "1rem",
+                }}
+              >
+                Scan the QR if this little app made your prep easier 🌷
+              </div>
+
+              <div
+                style={{
+                  width: "100%",
+                  maxWidth: "310px",
+                  background: "#fff",
+                  border: "1.5px solid #f2d9e3",
+                  borderRadius: "24px",
+                  padding: "0.8rem",
+                  boxShadow: "2px 2px 0 rgba(0,0,0,0.08)",
+                }}
+              >
+                <img
+                  src={supportQr}
+                  alt="UPI QR code for support"
+                  className="w-full rounded-[18px] object-contain"
+                />
+              </div>
+
+              <div
+                style={{
+                  marginTop: "0.95rem",
+                  fontSize: "13px",
+                  color: "#9a5571",
+                  fontWeight: 700,
+                }}
+              >
+                Thank you so much 😊
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <footer
         style={{
           fontFamily: "'Nunito', sans-serif",
@@ -222,32 +357,28 @@ function DashboardPage() {
             <p style={{ fontSize: "12px", color: "#b8832e", margin: 0 }}>
               If this helped you, treat me!
             </p>
-            <a
-              href="https://buymeacoffee.com/YOUR_USERNAME"
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => setSupportOpen(true)}
+              className="cute-btn-support"
+              style={{
+                background: "#c05c00",
+                color: "#fff",
+                border: "none",
+                borderRadius: "12px",
+                padding: "0.5rem 1.25rem",
+                fontFamily: "'Nunito', sans-serif",
+                fontSize: "13px",
+                fontWeight: 800,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                transition: "transform 0.15s, opacity 0.15s",
+              }}
             >
-              <button
-                className="cute-btn-support"
-                style={{
-                  background: "#c05c00",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "12px",
-                  padding: "0.5rem 1.25rem",
-                  fontFamily: "'Nunito', sans-serif",
-                  fontSize: "13px",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  transition: "transform 0.15s, opacity 0.15s",
-                }}
-              >
-                Support <span style={{ color: "#ffb3b3" }}>♥</span>
-              </button>
-            </a>
+              Support <span style={{ color: "#ffb3b3" }}>♥</span>
+            </button>
           </div>
 
           <div
@@ -296,7 +427,7 @@ function DashboardPage() {
             >
               {[
                 {
-                  href: "https://instagram.com/YOUR_USERNAME",
+                  href: "https://instagram.com/dhanaraj_rk_",
                   title: "Instagram",
                   icon: (
                     <svg
@@ -322,7 +453,7 @@ function DashboardPage() {
                   ),
                 },
                 {
-                  href: "https://github.com/YOUR_USERNAME",
+                  href: "https://github.com/dhanarajrk",
                   title: "GitHub",
                   icon: (
                     <svg
@@ -336,7 +467,7 @@ function DashboardPage() {
                   ),
                 },
                 {
-                  href: "https://linkedin.com/in/YOUR_USERNAME",
+                  href: "https://linkedin.com/in/dhanaraj-rk",
                   title: "LinkedIn",
                   icon: (
                     <svg
@@ -425,7 +556,7 @@ function DashboardPage() {
               It means a lot!
             </p>
             <a
-              href="https://github.com/YOUR_USERNAME/YOUR_REPO"
+              href="https://github.com/dhanarajrk/blind75-reminder"
               target="_blank"
               rel="noreferrer"
             >
