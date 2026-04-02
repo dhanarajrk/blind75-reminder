@@ -119,11 +119,15 @@ export const googleAuthSuccess = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    const appUrl = process.env.APP_URL || "http://localhost:5173";
+    const frontendUrl = process.env.CLIENT_URL;
 
-    return res.redirect(
-      `${appUrl}/oauth-success?token=${token}`
-    );
+    if (!frontendUrl) {
+      return res
+        .status(500)
+        .json({ message: "CLIENT_URL is not configured" });
+    }
+
+    return res.redirect(`${frontendUrl}/oauth-success?token=${token}`);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
