@@ -4,7 +4,7 @@ import { sendEmail } from "./sendEmail.js";
 
 const getDateKey = (date = new Date()) => date.toISOString().split("T")[0];
 
-const buildReminderEmail = ({ userName, dueProblems, appUrl }) => {
+const buildReminderEmail = ({ userName, dueProblems, frontendUrl }) => {
   const topProblems = dueProblems.slice(0, 8);
 
   return `
@@ -57,7 +57,7 @@ const buildReminderEmail = ({ userName, dueProblems, appUrl }) => {
 
           <div style="margin:20px 0;">
             <a
-              href="${appUrl}"
+              href="${frontendUrl}"
               style="display:inline-block;background:#1a1208;color:#f5f0e8;text-decoration:none;padding:10px 16px;font-size:13px;border:2px solid #1a1208;"
             >
               Open Dashboard
@@ -79,7 +79,7 @@ export const sendDueReminders = async () => {
   });
 
   const todayKey = getDateKey(new Date());
-  const appUrl = process.env.APP_URL || "http://localhost:5173";
+  const frontendUrl = process.env.CIENT_URL || "http://localhost:5173";
 
   for (const user of users) {
     const userProblems = await UserProblem.find({
@@ -97,7 +97,7 @@ export const sendDueReminders = async () => {
     const html = buildReminderEmail({
       userName: user.name,
       dueProblems,
-      appUrl,
+      frontendUrl,
     });
 
     await sendEmail({
