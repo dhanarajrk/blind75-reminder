@@ -9,15 +9,10 @@ import { useAuthStore } from "../store/authStore";
 import { fetchDashboard } from "../api/problemApi";
 import { fetchAnalytics } from "../api/analyticsApi";
 import supportQr from "../assets/support-upi-qr.jpeg";
-import posthog from "posthog-js";
 
 
 function DashboardPage() {
   const token = useAuthStore((s) => s.token);
-
-  useEffect(() => {
-    posthog.capture("test_event_loaded_dashboard");
-  }, []);
 
   const now = new Date();
   const [calendarView, setCalendarView] = useState({
