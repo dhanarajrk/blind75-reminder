@@ -9,6 +9,11 @@ import { useAuthStore } from "../store/authStore";
 import { fetchDashboard } from "../api/problemApi";
 import { fetchAnalytics } from "../api/analyticsApi";
 import supportQr from "../assets/support-upi-qr.jpeg";
+import posthog from "posthog-js";
+
+useEffect(() => {
+  posthog.capture("test_event_loaded_dashboard");
+}, []);
 
 function DashboardPage() {
   const token = useAuthStore((s) => s.token);
