@@ -14,9 +14,11 @@ export const useAuthStore = create((set) => ({
     set({ user: res.data.user, token: res.data.token });
 
     // PostHog tracking
-    if (res.data.user?._id) {
-      posthog.identify(res.data.user._id, {
+    const userId = res.data.user?.id || res.data.user?._id;
+    if (userId) {
+      posthog.identify(userId, {
         email: res.data.user.email,
+        name: res.data.user.name,
       });
     }
 
@@ -29,9 +31,11 @@ export const useAuthStore = create((set) => ({
     set({ user: res.data.user, token: res.data.token });
 
     // PostHog tracking
-    if (res.data.user?._id) {
-      posthog.identify(res.data.user._id, {
+    const userId = res.data.user?.id || res.data.user?._id;
+    if (userId) {
+      posthog.identify(userId, {
         email: res.data.user.email,
+        name: res.data.user.name,
       });
     }
 
@@ -53,14 +57,12 @@ export const useAuthStore = create((set) => ({
 
       set({ user: res.data, token });
 
-      // PostHog tracking (covers Google login flow)
-      if (res.data?._id) {
-        posthog.identify(res.data._id, {
+      // PostHog tracking
+      const userId = res.data?.id || res.data?._id;
+      if (userId) {
+        posthog.identify(userId, {
           email: res.data.email,
-        });
-
-        posthog.capture("user_logged_in", {
-          method: "google",
+          name: res.data.name,
         });
       }
 
