@@ -1,26 +1,30 @@
-import SibApiV3Sdk from "@getbrevo/brevo";
-
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-apiInstance.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
+import axios from "axios";
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "Blind 75 Reminder",
+          email: process.env.EMAIL_USER,
+        },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    sendSmtpEmail.subject = subject;
-    sendSmtpEmail.htmlContent = html;
-    sendSmtpEmail.sender = {
-      name: "Blind 75 Reminder",
-      email: process.env.EMAIL_USER,
-    };
-    sendSmtpEmail.to = [{ email: to }];
-
-    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-
-    console.log("Email sent:", result.messageId);
-    return result;
+    console.log("Email sent:", response.data.messageId);
+    return response.data;
   } catch (err) {
-    console.error("Email failed:", err);
+    console.error("Email failed:", err.response?.data || err.message);
     throw err;
   }
 };
