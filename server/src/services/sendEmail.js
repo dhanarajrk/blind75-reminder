@@ -1,4 +1,4 @@
-import * as SibApiV3Sdk from "@getbrevo/brevo";
+import SibApiV3Sdk from "@getbrevo/brevo";
 
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 apiInstance.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
@@ -11,7 +11,7 @@ export const sendEmail = async ({ to, subject, html }) => {
     sendSmtpEmail.htmlContent = html;
     sendSmtpEmail.sender = {
       name: "Blind 75 Reminder",
-      email: process.env.EMAIL_USER, //my gmail
+      email: process.env.EMAIL_USER,
     };
     sendSmtpEmail.to = [{ email: to }];
 
