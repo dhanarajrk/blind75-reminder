@@ -1,36 +1,23 @@
-import nodemailer from "nodemailer";
-import dns from "dns";
+import { Resend } from "resend";
 
-dns.setDefaultResultOrder("ipv4first");
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-      requireTLS: true,
-    });
-
-    const mailOptions = {
-      from: `"Blind 75 Reminder" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: "Blind 75 Reminder <onboarding@resend.dev>",
       to,
       subject,
       html,
-    };
+    });
 
-    await transporter.verify();
-    const result = await transporter.sendMail(mailOptions);
+    if (error) {
+      console.error("Email failed:", error);
+      throw error;
+    }
 
-    console.log("Email sent:", result.messageId);
-    return result;
+    console.log("Email sent:", data.id);
+    return data;
   } catch (err) {
     console.error("Email failed:", err);
     throw err;
