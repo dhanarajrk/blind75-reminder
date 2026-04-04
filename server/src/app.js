@@ -43,6 +43,11 @@ app.get("/", (req, res) => {
   });
 });
 
+// Health check for UptimeRobot
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // routes
 app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);

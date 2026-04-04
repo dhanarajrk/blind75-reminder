@@ -4,7 +4,6 @@ dotenv.config();
 import app from "./app.js";
 import connectDB from "./config/db.js";
 import { seedProblems } from "./utils/seedProblems.js";
-import { startReminderCron } from "./jobs/reminderCron.js";
 import configurePassport from "./config/passport.js";
 
 
