@@ -3,11 +3,16 @@ import nodemailer from "nodemailer";
 export const sendEmail = async ({ to, subject, html }) => {
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
 
     const mailOptions = {
@@ -17,20 +22,14 @@ export const sendEmail = async ({ to, subject, html }) => {
       html,
     };
 
-    // ⛑ Add timeout wrapper (VERY IMPORTANT)
-    const sendPromise = transporter.sendMail(mailOptions);
+    await transporter.verify();
+    console.log("SMTP ready");
 
-    const result = await Promise.race([
-      sendPromise,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Email timeout")), 10000)
-      ),
-    ]);
-
+    const result = await transporter.sendMail(mailOptions);
     console.log("Email sent:", result.messageId);
     return result;
   } catch (err) {
-    console.error("Email failed:", err.message);
+    console.error("Email failed:", err);
     throw err;
   }
 };
