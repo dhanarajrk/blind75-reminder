@@ -79,9 +79,24 @@ export const sendDueReminders = async () => {
   });
 
   const todayKey = getDateKey(new Date());
-  const frontendUrl = process.env.CIENT_URL || "http://localhost:5173";
+  const frontendUrl =
+    process.env.CLIENT_URL ||
+    process.env.FRONTEND_URL ||
+    "http://localhost:5173";
+
+  let processedUsers = 0;
+  let sentCount = 0;
+  let skippedAlreadySent = 0;
 
   for (const user of users) {
+    processedUsers += 1;
+
+    // Prevent duplicate sends if the scheduler hits this endpoint many times a day
+    if (user.lastReminderDateKey === todayKey) {
+      skippedAlreadySent += 1;
+      continue;
+    }
+
     const userProblems = await UserProblem.find({
       user: user._id,
       nextReviewAt: { $ne: null },
@@ -105,5 +120,17 @@ export const sendDueReminders = async () => {
       subject: `Blind 75 REMINDER — ${dueProblems.length} due today`,
       html,
     });
+
+    user.lastReminderDateKey = todayKey;
+    await user.save();
+
+    sentCount += 1;
   }
+
+  return {
+    processedUsers,
+    sentCount,
+    skippedAlreadySent,
+    dateKey: todayKey,
+  };
 };

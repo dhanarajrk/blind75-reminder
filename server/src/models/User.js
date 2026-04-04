@@ -16,6 +16,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // ✅ NEW FIELD (prevents duplicate emails)
+    lastReminderDateKey: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

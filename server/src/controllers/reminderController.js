@@ -1,8 +1,32 @@
 import User from "../models/User.js";
 import UserProblem from "../models/UserProblem.js";
 import { sendEmail } from "../services/sendEmail.js";
+import { runReminderJob } from "../services/reminderService.js";
 
 const getDateKey = (date = new Date()) => date.toISOString().split("T")[0];
+
+export const runRemindersManually = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (authHeader !== `Bearer ${process.env.REMINDER_CRON_SECRET}`) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const result = await runReminderJob();
+
+    res.json({
+      success: true,
+      ...result,
+    });
+  } catch (err) {
+    console.error("Manual reminder failed:", err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 const buildReminderEmail = ({ userName, dueProblems, frontendUrl }) => {
   const topProblems = dueProblems.slice(0, 8);
