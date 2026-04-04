@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import UserProblem from "../models/UserProblem.js";
 import { sendEmail } from "../services/sendEmail.js";
-import { runReminderJob } from "../services/reminderService.js";
+import { sendDueReminders } from "../services/reminderService.js";
 
 const getDateKey = (date = new Date()) => date.toISOString().split("T")[0];
 
@@ -13,7 +13,7 @@ export const runRemindersManually = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const result = await runReminderJob();
+    const result = await sendDueReminders();
 
     res.json({
       success: true,
