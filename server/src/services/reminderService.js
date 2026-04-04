@@ -74,9 +74,10 @@ const buildReminderEmail = ({ userName, dueProblems, frontendUrl }) => {
 };
 
 export const sendDueReminders = async () => {
-  const users = await User.find({
-    reminderEnabled: true,
-  });
+  console.log("sendDueReminders started");
+
+  const users = await User.find({ reminderEnabled: true });
+  console.log("users found:", users.length);
 
   const todayKey = getDateKey(new Date());
   const frontendUrl =
@@ -90,10 +91,11 @@ export const sendDueReminders = async () => {
 
   for (const user of users) {
     processedUsers += 1;
+    console.log("checking user:", user.email);
 
-    // Prevent duplicate sends if the scheduler hits this endpoint many times a day
     if (user.lastReminderDateKey === todayKey) {
       skippedAlreadySent += 1;
+      console.log("already sent today:", user.email);
       continue;
     }
 
@@ -102,30 +104,38 @@ export const sendDueReminders = async () => {
       nextReviewAt: { $ne: null },
     }).populate("problem");
 
+    console.log("problem count:", userProblems.length, "for", user.email);
+
     const dueProblems = userProblems.filter((item) => {
       if (!item.nextReviewAt) return false;
       return getDateKey(new Date(item.nextReviewAt)) <= todayKey;
     });
 
+    console.log("due problems:", dueProblems.length, "for", user.email);
+
     if (!dueProblems.length) continue;
 
-    const html = buildReminderEmail({
-      userName: user.name,
-      dueProblems,
-      frontendUrl,
-    });
+    console.log("sending email to:", user.email);
 
     await sendEmail({
       to: user.email,
       subject: `Blind 75 REMINDER — ${dueProblems.length} due today`,
-      html,
+      html: buildReminderEmail({
+        userName: user.name,
+        dueProblems,
+        frontendUrl,
+      }),
     });
+
+    console.log("email sent to:", user.email);
 
     user.lastReminderDateKey = todayKey;
     await user.save();
 
     sentCount += 1;
   }
+
+  console.log("sendDueReminders finished");
 
   return {
     processedUsers,

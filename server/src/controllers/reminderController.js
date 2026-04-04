@@ -7,21 +7,26 @@ const getDateKey = (date = new Date()) => date.toISOString().split("T")[0];
 
 export const runRemindersManually = async (req, res) => {
   try {
+    console.log("manual reminder endpoint hit");
+
     const authHeader = req.headers.authorization;
 
     if (authHeader !== `Bearer ${process.env.REMINDER_CRON_SECRET}`) {
+      console.log("unauthorized reminder request");
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    console.log("authorized, starting reminders");
     const result = await sendDueReminders();
+    console.log("reminder result:", result);
 
-    res.json({
+    return res.json({
       success: true,
       ...result,
     });
   } catch (err) {
-    console.error("Manual reminder failed:", err);
-    res.status(500).json({
+    console.error("manual reminder failed:", err);
+    return res.status(500).json({
       success: false,
       message: err.message,
     });
